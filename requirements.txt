@@ -1,0 +1,10 @@
+# I recommend installing torch manually from 
+torch
+torchvision
+pandas
+numpy
+scikit-learn
+matplotlib
+Pillow
+tqdm
+seaborn
