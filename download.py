@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # Download the 56 zip files in Images_png in batches
+# This script was provided from the same NIH website where the images are availble for manual download.
 import urllib.request
 
 # URLs for the zip files

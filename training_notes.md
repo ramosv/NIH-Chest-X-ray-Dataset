@@ -15,17 +15,25 @@
 
 
 3. **Batch Size and Image Size Configurations:**
+   - Batch Size: 32
+   - Image Size: 224x224
+   - Training: 20 epochs
+   - Time to completion: 20 minutes
+
    - Batch Size: 64
    - Image Size: 512x512
    - Training: 20 epochs
+   - time to completion: 2 hours
 
+   - Batch Size: 32
+   - Image Size: 1024x1024
+   - Training: 20 epochs
+   - Time to completion: 10 hours
 
 4. **Checkpointing:**
-   - Best model is saved as `best_model.pth` based on validation loss.
+   - Best model is saved as `best_model_size.pth` based on validation loss.
    - Checkpoints are saved every 5 epochs as `checkpoint_epoch_X.pth`.
 
-
 5. **Performance Observations:**
-   - Note any GPU utilization and memory issues.
-   - Log training/validation losses and runtime for reference.
+   - As image size incrases training time increased drastically 
 
