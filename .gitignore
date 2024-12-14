@@ -10,7 +10,7 @@ __pycache__/
 #Dataset
 /Data/images
 /checkpoint*
-/best_model*
+*.pth
 
 # Distribution / packaging
 .Python
