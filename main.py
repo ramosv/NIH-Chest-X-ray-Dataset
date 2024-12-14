@@ -16,7 +16,6 @@ from torch.amp import GradScaler, autocast
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
-# Set random seeds for reproducibility
 def set_seed(seed=1):
     random.seed(seed)
     np.random.seed(seed)
@@ -26,31 +25,26 @@ def set_seed(seed=1):
 
 set_seed()
 
-# Paths
+
 DATA_CSV = "Data/Data_Entry_2017_v2020.csv"
 IMAGES_DIR = "Data/images/"
 
-# Hyperparameters
-BATCH_SIZE = 64
+BATCH_SIZE = 32
 LEARNING_RATE = 1e-4
 NUM_EPOCHS = 20
-IMAGE_SIZE = 512
-
-# We have 15 classes including "No Finding"
+IMAGE_SIZE = 1024
 NUM_CLASSES = 15
 
-# PyTorch device configuration for CUDA
 device = torch.device('cuda')
 print(f'Using device: {device}')
 
-# Load the data into a pandas dataframe
 images = pd.read_csv(DATA_CSV)
 print(images.head())
 
 print("Sample image name:", images.iloc[0]['Image Index'])
 print("Path exists:", os.path.exists(os.path.join(IMAGES_DIR, images.iloc[0]['Image Index'])))
 
-# Rename columns for easier access
+
 images.columns = [
     "Image Index", "Finding Labels", "Follow-up #", "Patient ID",
     "Patient Age", "Patient Gender", "View Position",
@@ -58,7 +52,7 @@ images.columns = [
     "OriginalImagePixelSpacing_x", "OriginalImagePixelSpacing_y"
 ]
 
-# Initialize MultiLabelBinarizer with "No Finding" included
+
 mlb = MultiLabelBinarizer(classes=[
     "No Finding", "Atelectasis", "Cardiomegaly", "Effusion", "Infiltration",
     "Mass", "Nodule", "Pneumonia", "Pneumothorax",
@@ -66,14 +60,12 @@ mlb = MultiLabelBinarizer(classes=[
     "Pleural_Thickening", "Hernia"
 ])
 
-# Split the labels and encode them
 images['Finding Labels'] = images['Finding Labels'].str.split('|')
 y = mlb.fit_transform(images['Finding Labels'])
 
 print("Classes:", mlb.classes_)
 print("Shape of labels:", y.shape)
 
-# Split the data into training and validation sets on the patient level
 train_patients, val_patients = train_test_split(
     images['Patient ID'].unique(),
     test_size=0.2,
@@ -83,11 +75,9 @@ train_patients, val_patients = train_test_split(
 train_df = images[images['Patient ID'].isin(train_patients)].reset_index(drop=True)
 val_df = images[images['Patient ID'].isin(val_patients)].reset_index(drop=True)
 
-# Encode labels
 train_y = mlb.transform(train_df['Finding Labels'])
 val_y = mlb.transform(val_df['Finding Labels'])
 
-# Data transforms for training and validation
 train_transforms = transforms.Compose([
     transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
     transforms.RandomHorizontalFlip(),
@@ -104,18 +94,15 @@ val_transforms = transforms.Compose([
                          std=[0.229, 0.224, 0.225])
 ])
 
-# Datasets and Dataloaders
 train_dataset = ChestXRayDataset(train_df, train_y, IMAGES_DIR, transform=train_transforms)
 val_dataset = ChestXRayDataset(val_df, val_y, IMAGES_DIR, transform=val_transforms)
 
 train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=8)
 val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=8)
 
-# Instantiate the model
 model = create_model(num_classes=NUM_CLASSES)
 model = model.to(device)
 
-# Compute class weights for imbalance
 class_counts = train_y.sum(axis=0)
 class_weights = 1. / (class_counts + 1e-5)
 class_weights = torch.FloatTensor(class_weights).to(device)
@@ -124,11 +111,10 @@ print("Class weights:", class_weights)
 criterion = nn.BCEWithLogitsLoss(weight=class_weights)
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
-# Initialize TensorBoard SummaryWriter
 writer = SummaryWriter(log_dir='runs/ChestXRay_Experiment')
 
 best_val_loss = float('inf')
-scaler = GradScaler(enabled=True)  # Enable mixed precision
+scaler = GradScaler(enabled=True) 
 
 for epoch in range(NUM_EPOCHS):
     model.train()
@@ -141,12 +127,6 @@ for epoch in range(NUM_EPOCHS):
         with autocast('cuda'): 
             outputs = model(images_batch)
             loss = criterion(outputs, labels_batch)
-
-
-        # print("Raw loss value:", loss.item())
-        # print("Sample outputs (logits):", outputs[:1])
-        # print("Sample labels:", labels_batch[:1])
-        # print("Sample outputs (probabilities):", torch.sigmoid(outputs[:1]))
 
         scaler.scale(loss).backward()
         scaler.step(optimizer)
