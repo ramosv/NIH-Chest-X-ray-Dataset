@@ -29,12 +29,14 @@ set_seed()
 DATA_CSV = "Data/Data_Entry_2017_v2020.csv"
 IMAGES_DIR = "Data/images/"
 
+# manully adjusted parameters. Image_size and Batch_size were the only parameters we really adjusted
 BATCH_SIZE = 32
 LEARNING_RATE = 1e-4
 NUM_EPOCHS = 20
 IMAGE_SIZE = 1024
 NUM_CLASSES = 15
 
+# Change this to cpu or mps if working with mac os
 device = torch.device('cuda')
 print(f'Using device: {device}')
 
@@ -78,6 +80,8 @@ val_df = images[images['Patient ID'].isin(val_patients)].reset_index(drop=True)
 train_y = mlb.transform(train_df['Finding Labels'])
 val_y = mlb.transform(val_df['Finding Labels'])
 
+# We used the normalization values from ImageNet which align witht the pretrained model we are using.
+# For both train and val transforms
 train_transforms = transforms.Compose([
     transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
     transforms.RandomHorizontalFlip(),
@@ -111,6 +115,7 @@ print("Class weights:", class_weights)
 criterion = nn.BCEWithLogitsLoss(weight=class_weights)
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
+# for tensorboard to work. 
 writer = SummaryWriter(log_dir='runs/ChestXRay_Experiment')
 
 best_val_loss = float('inf')

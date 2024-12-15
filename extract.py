@@ -1,6 +1,7 @@
 import os 
 import tarfile
 
+# A script to work in conjuction of the download.py file. THis one just extracts the files and puts them in a dir.
 base_dir = os.path.dirname(os.path.abspath(__file__))
 output_dir = os.path.join(base_dir,"images")
 os.makedirs(output_dir, exist_ok=True)
